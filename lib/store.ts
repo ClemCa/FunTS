@@ -4,7 +4,7 @@ type Element<T> = {
 
 type Extension<T> = {
     cleanUp: () => void;
-    update: (value: T) => void;
+    update: (value: T, ...args: any) => T;
     validate: (value: T) => boolean;
 }
 
@@ -21,11 +21,8 @@ class Fragment<T> {
     set(value: T | ((value: T | undefined) => T)) {
         this.__store.set(this.__internal, value);
     }
-    extend(extension: Extension<T>) {
-        this.__store.extend(this.__internal, extension);
-    }
-    extension(extension: keyof Extension<T>) {
-        return this.__store.extension(this.__internal, extension);
+    update(fn: (value: T) => T) {
+        this.__store.update(this.__internal, fn);
     }
     do(action: (value: T) => void) {
         const value = this.get();
@@ -56,14 +53,10 @@ export class Store {
         const element = this.__internal.get(key);
         return element?.value;
     }
-    set<T>(key: string, value: T | ((value: T | undefined) => T)): void {
+    set<T>(key: string, value: T): void {
         if(this.__internal.has(key)) {
             const element = this.__internal.get(key);
             element?.cleanUp();
-        }
-        if(typeof value === "function") {
-            // @ts-ignore
-            value = value(this.get<T>(key));
         }
         this.__internal.set(key, {
             value,
@@ -73,24 +66,13 @@ export class Store {
             }
         });
     }
-    extend<T>(key: string, extension: Extension<T>): void {
+    update<T>(key: string, fn: (value: T) => T) {
+        if(this.__internal.has(key)) {
+            const element = this.__internal.get(key);
+            element?.cleanUp();
+        }
         const element = this.__internal.get(key);
-        if(element === undefined) {
-            throw new Error("Key does not exist");
-        }
-        this.__internal.set(key, {
-            ...element,
-            ...extension
-        });
+        element.value = fn(element.value);
+        this.__internal.set(key, element);
     }
-    extension<T>(key: string, extension: keyof Extension<T>) {
-        const element: Element<T> = this.__internal.get(key);
-        if(element === undefined) {
-            throw new Error("Key does not exist");
-        }
-        if(element[extension] === undefined) {
-            throw new Error("Extension was not created");
-        }
-        return element[extension] as Extension<T>[typeof extension];
-    };
 }

@@ -1,102 +1,71 @@
 import { App, Pipeline, ExpandableType, UnshapenPipeline } from "@lib/app";
 
 export function EmptyPipeline(outCallback: (value: any) => void, startCallback: () => void) {
-    return {
+    const obj = {
         __value: {
             out: outCallback,
             start: startCallback,
         },
-        in(path: string) {
-            return ApplyIn<{}>(this, path) as UnshapenPipeline<{}>;
-        }
-    };
+        in: (path: string) => ApplyIn(obj, path) as UnshapenPipeline<{}>,
+        start: () => startCallback(),
+    }
+    return obj;
 }
 
 
 function ApplyIn<T>(app: App<T>, inVal: string): UnshapenPipeline<T> {
-    return {
+    const obj = {
         ...app,
         __value: {
-            out: app.__value.out,
+            ...app.__value,
             in: inVal,
+            pipeline: []
         },
-        shape: (shape) => ApplyShape(this, shape),
+        shape: (shape) => ApplyShape(obj, shape),
+        where: (fn) => ApplyWhere(obj, fn),
+        do: (action) => ApplyDo(obj, action),
+        pass: (args) => ApplyPass(obj, args),
+        transform: (fn) => ApplyTransform(obj, fn),
+        static: (result) => ApplyOut(obj, "static", result),
+        dynamic: (fn) => ApplyOut(obj, "dynamic", fn),
+        close: () => ApplyOut(obj, "close", undefined),
+        status: (code, message) => ApplyStatus(obj, code, message),
     };
+    return obj;
 }
 
 function ApplyShape<T, U>(pipeline: UnshapenPipeline<T>, shape: U): Pipeline<U> {
-    return {
-        __value: {
-            ...pipeline.__value,
-            'shape': shape,
-        },
-        where: (fn) => ApplyWhere(this, fn),
-        do: (action) => ApplyDo(this, action),
-        pass: (args) => ApplyPass(this, args),
-        transform: (fn) => ApplyTransform(this, fn),
-        static: (result) => ApplyOut(this, "static", result),
-        dynamic: (fn) => ApplyOut(this, "dynamic", fn),
-        close: () => ApplyOut(this, "close", undefined),
-    };
+    pipeline.__value.pipeline.push(['shape', shape]);
+    pipeline.shape = undefined;
+    return pipeline as unknown as Pipeline<U>;
 }
 
 function ApplyWhere<T>(app: Pipeline<T>, where: (args: T) => boolean) {
-    return {
-        ...app,
-        __value: {
-            ...app.__value,
-            pipeline: [
-                ...app.__value?.pipeline,
-                ['where', where]
-            ]
-        },
-    };
+    app.__value.pipeline.push(['where', where]);
+    return app;
 }
 
 function ApplyDo<T>(app: Pipeline<T>, action: (args: T) => void) {
-    return {
-        ...app,
-        __value: {
-            ...app.__value,
-            pipeline: [
-                ...app.__value?.pipeline,
-                ['do', action]
-            ]
-        },
-    };
+    app.__value.pipeline.push(['do', action]);
+    return app;
 }
 
 function ApplyPass<T, U>(app: Pipeline<T>, args: U) {
-    return {
-        ...app,
-        __value: {
-            ...app.__value,
-            pipeline: [
-                ...app.__value?.pipeline,
-                ['pass', args]
-            ],
-        },
-    } as Pipeline<ExpandableType<T, U>>;
+    app.__value.pipeline.push(['pass', args]);
+    return app as Pipeline<ExpandableType<T, U>>;
 }
 
 function ApplyTransform<T, U>(app: Pipeline<T>, fn: (args: T) => U) {
-    return {
-        ...app,
-        __value: {
-            ...app.__value,
-            pipeline: [
-                ...app.__value?.pipeline,
-                ['transform', fn]
-            ],
-        },
-    } as unknown as Pipeline<U>;
+    app.__value.pipeline.push(['transform', fn]);
+    return app as unknown as Pipeline<U>;
 }
 
 function ApplyOut<T>(app: Pipeline<T>, mode, out: (value: T) => void | any) {
-    app.__value.out(
-        {
-            ...app.__value,
-            [mode]: out
-        }
-    );
+    app.__value.pipeline.push([mode, out]);
+    app.__value.out(app.__value);
+}
+
+function ApplyStatus<T>(app: Pipeline<T>, code: number, message: string) {
+    app.__value.pipeline.push(['status', [code, message]]);
+    app.__value.out(app.__value);
 }

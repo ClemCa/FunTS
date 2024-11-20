@@ -4,6 +4,7 @@
     "target": "ESNext",
     "module": "nodenext",
     "outDir": "./dist",
+    "baseUrl": "./",
     "paths": {
       "@lib/*": ["./lib/*"],
       "@/*": ["./*"], // next for node_modules

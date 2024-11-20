@@ -9,8 +9,7 @@ export type App<T> = {
 
 export type UnshapenPipeline<T> = {
     shape<U>(shape: U): Pipeline<U>;
-    __value: any;
-}
+} & Pipeline<T>;
 
 export type Pipeline<T> = {
     where: (fn: (args: T) => boolean) => Pipeline<T>;
@@ -20,5 +19,6 @@ export type Pipeline<T> = {
     close: () => void;
     static: (result: any) => void;
     dynamic: (fn: (args: T) => any) => void;
+    status: (code: number, message: string) => void;
     __value: any;
 };

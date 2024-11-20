@@ -1,29 +1,38 @@
 {
-  "name": "fun-ts",
-  "version": "1.0.0",
+  "name": "clemfun-ts",
+  "version": "0.0.1",
   "main": "index.ts",
   "scripts": {
     "start": "node dist/index.js",
-    "build": "tsc",
-    "dev": "concurrently -k \"tsc -p ./dist/index.js -w\" \"nodemon ./dist/index.js\""
+    "build": "tsc && tsc-alias",
+    "test": "concurrently \"tsc-watch --onSuccess 'tsc-alias'\" \"nodemon ./dist/test.js\""
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ClemCa/FunTS.git"
   },
   "author": "ClemCa",
-  "license": "MIT",
+  "license": "GLWTPL",
   "bugs": {
     "url": "https://github.com/ClemCa/FunTS/issues"
   },
   "homepage": "https://github.com/ClemCa/FunTS#readme",
-  "description": "",
   "devDependencies": {
     "@types/express": "^5.0.0",
     "concurrently": "^9.1.0",
-    "typescript": "^5.6.3"
+    "tsc-alias": "^1.8.10",
+    "typescript": "^5.6.3",
+    "tsc-watch": "^6.2.1"
   },
   "dependencies": {
     "express": "^4.21.1"
-  }
+  },
+  "files": [
+    "dist",
+    "!dist/test.js"
+  ],
+  "directories": {
+    "lib": "lib"
+  },
+  "description": ""
 }
