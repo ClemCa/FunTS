@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "nodenext",
+    "target": "ESNext",
+    "module": "nodenext",
+    "outDir": "./dist",
+    "paths": {
+      "@lib/*": ["./lib/*"],
+      "@/*": ["./*"], // next for node_modules
+    }
+  },
+}
