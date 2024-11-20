@@ -5,6 +5,7 @@
     "module": "nodenext",
     "outDir": "./dist",
     "baseUrl": "./",
+    "declaration": true,
     "paths": {
       "@lib/*": ["./lib/*"],
       "@/*": ["./*"], // next for node_modules

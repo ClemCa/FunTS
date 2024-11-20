@@ -9,7 +9,7 @@ const app = store.new<Express>("app", undefined);
 const pipelines = store.new("pipelines", new Map<string, any[]>());
 
 export function GetStore() {
-    return store;
+    return userStore;
 }
 
 export function CreateApp() {

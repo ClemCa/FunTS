@@ -1,7 +1,8 @@
 {
   "name": "clemfun-ts",
-  "version": "0.0.2",
-  "main": "index.ts",
+  "version": "0.0.3",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "start": "node dist/index.js",
     "build": "tsc && tsc-alias",
@@ -28,11 +29,10 @@
     "express": "^4.21.1"
   },
   "files": [
-    "**/*.ts",
-    "!test.ts"
+    "/dist/**/*.js",
+    "/dist/**/*.d.ts",
+    "!/dist/test.js",
+    "!/dist/test.d.ts"
   ],
-  "directories": {
-    "lib": "lib"
-  },
   "description": ""
 }
