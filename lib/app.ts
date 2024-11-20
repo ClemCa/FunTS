@@ -4,7 +4,6 @@ export type ExpandableType<A, B> = A extends undefined ? B : {
 
 export type App<T> = {
     in: (path: string) => Pipeline<T>;
-    __value: any;
 };
 
 export type UnshapenPipeline<T> = {
@@ -20,5 +19,4 @@ export type Pipeline<T> = {
     static: (result: any) => void;
     dynamic: (fn: (args: T) => any) => void;
     status: (code: number, message: string) => void;
-    __value: any;
 };
