@@ -9,6 +9,10 @@
     "paths": {
       "@lib/*": ["./lib/*"],
       "@/*": ["./*"], // next for node_modules
-    }
+    },
+    "esModuleInterop": true
   },
+  "include": [
+    "**/*.ts"
+  ]
 }

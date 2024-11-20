@@ -8,7 +8,7 @@ export function EmptyPipeline(outCallback: (value: any) => void, startCallback: 
         },
         in: (path: string) => ApplyIn(obj, path) as UnshapenPipeline<{}>,
         start: () => startCallback(),
-    }
+    } as const;
     return obj;
 }
 
