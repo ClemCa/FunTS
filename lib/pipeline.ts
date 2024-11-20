@@ -1,4 +1,4 @@
-import { App, Pipeline, ExpandableType, UnshapenPipeline } from "@lib/app";
+import { App, Pipeline, ExpandableType, UnshapenPipeline } from "./app";
 
 export function EmptyPipeline(outCallback: (value: any) => void, startCallback: () => void) {
     const obj = {
@@ -8,8 +8,11 @@ export function EmptyPipeline(outCallback: (value: any) => void, startCallback: 
         },
         in: (path: string) => ApplyIn(obj, path) as UnshapenPipeline<{}>,
         start: () => startCallback(),
-    } as const;
-    return obj;
+    }
+    return obj as unknown as {
+        in: (path: string) => UnshapenPipeline<{}>,
+        start: () => void
+    };
 }
 
 

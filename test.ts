@@ -1,4 +1,4 @@
-import { CreateApp } from "@/index";
+import { CreateApp } from "./index";
 
 const app = CreateApp();
 app.in('/')

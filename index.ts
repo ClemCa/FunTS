@@ -1,6 +1,6 @@
-import { Store } from "@lib/store";
+import { Store } from "./lib/store";
 import { Express, Request, Response, json } from "express";
-import { EmptyPipeline } from "@lib/pipeline";
+import { EmptyPipeline } from "./lib/pipeline";
 
 const store = new Store();
 const userStore = new Store();
