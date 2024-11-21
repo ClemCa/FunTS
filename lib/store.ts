@@ -22,7 +22,7 @@ class Fragment<T> {
         this.__store.set(this.__internal, value);
     }
     update(fn: (value: T) => T) {
-        this.__store.update(this.__internal, fn);
+        return this.__store.update(this.__internal, fn);
     }
     do(action: (value: T) => void) {
         const value = this.get();
@@ -74,5 +74,6 @@ export class Store {
         const element = this.__internal.get(key);
         element.value = fn(element.value);
         this.__internal.set(key, element);
+        return element.value;
     }
 }

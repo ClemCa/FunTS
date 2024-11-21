@@ -10,10 +10,16 @@ app.in('/')
     .where(({ b }) => {
         return b === 2
     })
+    .transform(({ a, b, c }) => ({ a, b: b + 1, c }))
     .do(({ a, b, c }) => console.log("Hello " + a + b + c))
-    .static("super");
+    .static("super")
+    .withoutDo()
+    .accepted({ a: 1, b: 2, c: 3 })
+    .inspect({ a: 1, b: 2, c: 3 }, 2, { a: 1, b: 3, c: 3 })
+    .rejected({ a: 1, b: 1, c: 1 })
 
-app.in('/').status(403, 'Forbidden');
+app.in('/').status(403, 'Forbidden')
+    .accepted({ a: 1, b: 2, c: 3 })
 
 app.start();
 

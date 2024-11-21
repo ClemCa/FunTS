@@ -1,4 +1,9 @@
-import { App, Pipeline, ExpandableType, UnshapenPipeline } from "./app";
+import { App, Pipeline, ExpandableType, UnshapenPipeline, WithSideEffects, } from "./app";
+import { Store } from "./store";
+import { MakeDynamicAssertable, MakeStaticAssertable } from "./assertions";
+
+const store = new Store();
+const pipelineCount = store.new("pipelineIDs", 0);
 
 export function EmptyPipeline(outCallback: (value: any) => void, startCallback: () => void) {
     const obj = {
@@ -66,9 +71,17 @@ function ApplyTransform<T, U>(app: Pipeline<T>, fn: (args: T) => U) {
 function ApplyOut<T>(app: Pipeline<T>, mode, out: (value: T) => void | any) {
     app['__value'].pipeline.push([mode, out]);
     app['__value'].out(app['__value']);
+    const id = pipelineCount.update((v) => v + 1) + "("+app['__value'].in+")";
+    if(mode === "dynamic")
+    {
+        return MakeDynamicAssertable<WithSideEffects>(id, app['__value'].pipeline, false);
+    }
+    return MakeStaticAssertable<WithSideEffects>(id, app['__value'].pipeline, false);
 }
 
 function ApplyStatus<T>(app: Pipeline<T>, code: number, message: string) {
     app['__value'].pipeline.push(['status', [code, message]]);
     app['__value'].out(app['__value']);
+    const id = pipelineCount.update((v) => v + 1) + "("+app['__value'].in+")";
+    return MakeStaticAssertable<WithSideEffects>(id, app['__value'].pipeline, false);
 }

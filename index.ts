@@ -1,6 +1,8 @@
 import { Store } from "./lib/store";
-import { Express, Request, Response, json } from "express";
+import { Express, json } from "express";
 import { EmptyPipeline } from "./lib/pipeline";
+import { ProcessPipeline } from "lib/processing";
+import { RunAsserts } from "lib/assertions";
 
 const store = new Store();
 const userStore = new Store();
@@ -20,7 +22,10 @@ export function CreateApp() {
     return EmptyPipeline(RegisterPipeline, StartApp);
 }
 
-function StartApp() {
+function StartApp(ignoreFailedAssertions: boolean = false) {
+    if(RunAsserts() === false && !ignoreFailedAssertions) {
+        throw new Error("Failed assertions");
+    }
     const expressApp = app.get();
     if (expressApp === undefined) {
         throw new Error("App does not exist");
@@ -55,71 +60,4 @@ function RegisterPipeline(__value: any) {
         v.set(__value.in, group);
         return v;
     });
-}
-
-function ProcessPipeline(__value: [string, any][], req: Request, res: Response) {
-    const body = req.body;
-    const result = __value.length === 0 || PipelineStep(__value, 0, body);
-    if(result) {
-        if(Array.isArray(result)) {
-            res.status(result[0]).send(result[1]);
-            return true;
-        }
-        if(result === true) {
-            res.status(200).send("OK");
-            return true;
-        }
-        res.send(result);
-        return true;
-    }
-    return false;
-}
-
-function PipelineStep(pipeline: [string, any][], step: number, body: object) {
-    if(step === pipeline.length) {
-        console.error("Unclosed pipeline", pipeline);
-        return false;
-    }
-    const [action, value] = pipeline[step];
-    if(action === "where") {
-        const result = value(body);
-        if(result) {
-            return PipelineStep(pipeline, step + 1, body);
-        }
-        return false;
-    }
-    switch(action) {
-        case "do":
-            value(body);
-            return PipelineStep(pipeline, step + 1, body);
-        case "pass":
-            return PipelineStep(pipeline, step + 1, {...body, ...value});
-        case "transform":
-            return PipelineStep(pipeline, step + 1, value(body));
-        case "shape":
-            if(!CheckShape(value, body)) return false;
-            return PipelineStep(pipeline, step + 1, body);
-        case "static":
-            return value;
-        case "dynamic":
-            return value(body);
-        case "close":
-            return true;
-        case "status":
-            return value;
-    };
-    console.error("Unhandled action", action);
-    return false;
-}
-
-function CheckShape(value: object, body: object) {
-    for(const key in value) {
-        if(!(key in body)) {
-            return false;
-        }
-        if(typeof value[key] !== typeof body[key]) {
-            return false;
-        }
-    }
-    return true;
 }
