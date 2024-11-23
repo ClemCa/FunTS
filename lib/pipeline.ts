@@ -5,18 +5,18 @@ import { MakeDynamicAssertable, MakeStaticAssertable } from "./assertions";
 const store = new Store();
 const pipelineCount = store.new("pipelineIDs", 0);
 
-export function EmptyPipeline(outCallback: (value: any) => void, startCallback: () => void) {
+export function EmptyPipeline(outCallback: (value: any) => void, startCallback: (port?: number, ignoreFailedAssertions?: boolean) => void) {
     const obj = {
         __value: {
             out: outCallback,
             start: startCallback,
         },
         in: (path: string) => ApplyIn(obj, path) as UnshapenPipeline<{}>,
-        start: () => startCallback(),
+        start: (port?: number, ignoreFailedAssertions?: boolean) => startCallback(port, ignoreFailedAssertions),
     }
     return obj as unknown as {
         in: (path: string) => UnshapenPipeline<{}>,
-        start: () => void
+        start: (port?: number, ignoreFailedAssertions?: boolean) => void
     };
 }
 

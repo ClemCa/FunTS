@@ -22,7 +22,7 @@ export function CreateApp() {
     return EmptyPipeline(RegisterPipeline, StartApp);
 }
 
-function StartApp(ignoreFailedAssertions: boolean = false) {
+function StartApp(port: number = 3000, ignoreFailedAssertions: boolean = false) {
     if(RunAsserts() === false && !ignoreFailedAssertions) {
         throw new Error("Failed assertions");
     }
@@ -47,7 +47,7 @@ function StartApp(ignoreFailedAssertions: boolean = false) {
             res.status(404).send("Not found");
         });
     });
-    expressApp.listen(3000, () => {
+    expressApp.listen(port, () => {
         console.log("Server started");
     });
 }
