@@ -56,7 +56,7 @@ export function PipelineStep(pipeline: [string, any][], step: number, body: obje
         case "static":
             return exit(value);
         case "dynamic":
-            return exit([value, body]);
+            return exit(value(body));
         case "close":
             return exit(true);
         case "status":

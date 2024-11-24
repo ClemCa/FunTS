@@ -3,8 +3,8 @@ import { Express, json } from "express";
 import { EmptyPipeline } from "./lib/pipeline";
 import { ProcessPipeline } from "lib/processing";
 import { RunAsserts } from "lib/assertions";
+import { store } from "lib/internal";
 
-const store = new Store();
 const userStore = new Store();
 
 const app = store.new<Express>("app", undefined);
