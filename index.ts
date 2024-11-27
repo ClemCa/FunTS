@@ -22,6 +22,10 @@ export function CreateApp() {
     return EmptyPipeline(RegisterPipeline, StartApp);
 }
 
+export function GetExpress() {
+    return app.get();
+}
+
 function StartApp(port: number = 3000, ignoreFailedAssertions: boolean = false) {
     if(RunAsserts() === false && !ignoreFailedAssertions) {
         throw new Error("Failed assertions");

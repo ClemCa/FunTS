@@ -47,7 +47,7 @@ function SchemaToExport(schema: object) {
     const schemaString = SchemaToString(schema, 1);
     return `enum StatusCode {\n   ${
         Object.entries(StatusCode).filter(([k, v]) => typeof v !== "string").map(([key, value]) => `${key} = ${value}`).join(",\n   ")
-    }\n}\ntype Schema = ${
+    }\n}\nexport type Schema = ${
         schemaString
     }\nconst raw = ${
         JSON.stringify(schema)
