@@ -106,7 +106,7 @@ type ReturnMode = "void" | "status" | "unknown" | [any];
 
 function GenerateSchema() {
     const pipelines = store.get<Map<string, [string, any][][]>>("pipelines");
-    const pipes = pipelines.entries().map(([path, group]) => {
+    const pipes = Array.from(pipelines.entries()).map(([path, group]) => {
         const shapes = group.map((pipeline) => {
             const shape = pipeline.find((p) => p[0] === "shape")?.[1] as object ?? {}
             const returnInfo = pipeline[pipeline.length - 1] as unknown as [string, any, any];
@@ -126,7 +126,7 @@ function GenerateSchema() {
             path = path.slice(0, -1);
         }
         return [path, shapes] as [string, [object, ReturnMode][]];
-    }).toArray();
+    });
     return GroupByLevel(pipes);
 }
 
