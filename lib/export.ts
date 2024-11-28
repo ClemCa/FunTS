@@ -7,51 +7,48 @@ export function Export(path?: string) {
     const g = GenerateSchema();
     const tsString = SchemaToExport(g);
     path ??= prompt("Enter path to save schema to: ");
-    if(!path || path.trim() === "") {
+    if (!path || path.trim() === "") {
         console.log("Empty name: cancelled export");
         return;
     }
     let defaultName = "schema";
-    const mode = path.indexOf("/") !== -1 ? "/" : "\\";
-    if(path.substring(path.lastIndexOf(mode)+1).indexOf(".") !== -1) {
-        defaultName = path.substring(path.lastIndexOf(mode)+1, path.lastIndexOf("."));
-        path = path.substring(0, path.lastIndexOf(mode)+1);
+    const currentWorkingDir = process.cwd();
+    const mode = currentWorkingDir.indexOf("/") !== -1 ? "/" : "\\";
+    if (path.substring(path.lastIndexOf(mode) + 1).indexOf(".") !== -1) {
+        defaultName = path.substring(path.lastIndexOf(mode) + 1, path.lastIndexOf("."));
+        path = path.substring(0, path.lastIndexOf(mode) + 1);
     }
-    console.log(defaultName);
-    SaveWithDefault(path, tsString, defaultName, "ts");
-    console.log("Exported schema to "+path);
+    SaveWithDefault(path, tsString, defaultName, "ts", mode);
 }
 
 export function GetSchema() {
     return GenerateSchema();
 }
 
-function SaveWithDefault(path: string, content: string, defaultName: string, extension: string) {
-    if(path.endsWith("/") || path.endsWith("\\")) {
+function SaveWithDefault(path: string, content: string, defaultName: string, extension: string, mode: '/' | '\\') {
+    if (path.endsWith(mode) || path.trim() === "") {
         path += defaultName;
     }
-    if(!path.endsWith("."+extension)) {
-        if(path.substring(path.lastIndexOf("/")+1).indexOf(".") !== -1) {
+    if (!path.endsWith("." + extension)) {
+        if (path.substring(path.lastIndexOf(mode) + 1).indexOf(".") !== -1) {
             path = path.substring(0, path.lastIndexOf("."));
         }
-        path += "."+extension;
+        path += "." + extension;
     }
-    const dir = path.substring(0, path.lastIndexOf("/") !== -1 ? path.lastIndexOf("/") : path.lastIndexOf("\\"));
-    if(!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, {recursive: true});
+    const dir = path.substring(0, path.lastIndexOf(mode));
+    if (dir.trim() !== "" && !fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
     }
     fs.writeFileSync(path, content);
+    console.log("Exported schema to " + path);
 }
 
 function SchemaToExport(schema: object) {
     const schemaString = SchemaToString(schema, 1);
-    return `enum StatusCode {\n   ${
-        Object.entries(StatusCode).filter(([k, v]) => typeof v !== "string").map(([key, value]) => `${key} = ${value}`).join(",\n   ")
-    }\n}\nexport type Schema = ${
-        schemaString
-    }\nconst raw = ${
-        JSON.stringify(schema)
-    }\ntype Raw<T> = object & {"::": {}}\nexport const schema = {
+    return `enum StatusCode {\n   ${Object.entries(StatusCode).filter(([k, v]) => typeof v !== "string").map(([key, value]) => `${key} = ${value}`).join(",\n   ")
+        }\n}\nexport type Schema = ${schemaString
+        }\nconst raw = ${JSON.stringify(schema)
+        }\ntype Raw<T> = object & {"::": {}}\nexport const schema = {
    ...raw,
    "::": {}
 } as Raw<Schema>
@@ -72,20 +69,23 @@ function SchemaToString(schema: object, level = 0) {
     */
     const entries = Object.entries(schema);
     const spaces = "   ".repeat(level);
-    const result = `{\n${spaces}${
-        entries.map(([key, value]) => {
-            if (key.startsWith("$")) {
-                if(key === "$") {
-                    if(Array.isArray(value[0])) {
-                        return "   $: [" + value.map((shape) => ConvertShapeToFunctionType(shape)).join(", ")+"]";
-                    }
-                    return `   $: ${ConvertShapeToFunctionType(value)}`;
+    const result = `{\n${spaces}${entries.map(([key, value]) => {
+        if (key.startsWith("$")) {
+            if (key === "$") {
+                if (Array.isArray(value[0])) {
+                    return "   $: [" + value.map((shape) => ConvertShapeToFunctionType(shape)).join(", ") + "]";
                 }
-                return `   ${key}: ${ConvertShapeToFunctionType(value)}`;
+                return `   $: ${ConvertShapeToFunctionType(value)}`;
             }
-            return `   ${key}: ${SchemaToString(value, level+1)}`;
-        }).join(",\n"+spaces)
-    }\n${spaces}}`;
+            return `   ${key}: ${ConvertShapeToFunctionType(value)}`;
+        }
+        return `   ${key}: ${SchemaToString(value, level + 1)}`;
+    }).join(",\n" + spaces)
+        }\n${spaces}}`;
+    if(result.indexOf("=> unknown") !== -1) {
+        const count = result.match(/=> unknown/g).length;
+        console.warn(`Warning: ${count} return types in the schema are unknown`);
+    }
     return result;
 }
 
@@ -96,13 +96,27 @@ function ConvertShapeToFunctionType(shape: [object, ReturnMode]) {
         case "status": return `(${params}) => [StatusCode, string]`;
         case "unknown": return `(${params}) => unknown`;
         default: {
+            if (shape[1][0] === "clemDyn") {
+                const variants = shape[1][1];
+                if (variants.length === 0) {
+                    return `(${params}) => any`;
+                }
+                return `(${params}) => (${variants.map((v) => TypeFromShape(v)).join(" | ")})`;
+            }
             const [returnType] = shape[1];
+            if (Array.isArray(returnType)) {
+                if (returnType.length === 1) {
+                    return `(${params}) => ${TypeFromShape(returnType[0])}[]`;
+                } else if (returnType.length === 0) {
+                    return `(${params}) => any[]`;
+                }
+            }
             return `(${params}) => ${TypeFromShape(returnType)}`;
         }
     }
 }
 
-type ReturnMode = "void" | "status" | "unknown" | [any];
+type ReturnMode = "void" | "status" | "unknown" | [any] | ["clemDyn", any];
 
 function GenerateSchema() {
     const pipelines = store.get<Map<string, [string, any][][]>>("pipelines");
@@ -114,6 +128,16 @@ function GenerateSchema() {
                 return [shape, "void"] as [object, ReturnMode];
             } else if (returnInfo[0] === "status") {
                 return [shape, "status"] as [object, ReturnMode];
+            } else if (returnInfo[0] === "dynamic") {
+                if (returnInfo[2] === undefined) {
+                    return [shape, "unknown"] as [object, ReturnMode];
+                }
+                if (Array.isArray(returnInfo[2])) {
+                    if (returnInfo[2].length != 1) {
+                        return [shape, ["clemDyn", returnInfo[2]]] as [object, ReturnMode];
+                    }
+                }
+                return [shape, [returnInfo[2]]] as [object, ReturnMode];
             } else {
                 return [shape, typeof returnInfo[2] === "undefined" ? "unknown" : [returnInfo[2]]] as [object, ReturnMode];
             }
@@ -122,7 +146,7 @@ function GenerateSchema() {
         if (path.startsWith("/")) {
             path = path.slice(1);
         }
-        if(path.endsWith("/")) {
+        if (path.endsWith("/")) {
             path = path.slice(0, -1);
         }
         return [path, shapes] as [string, [object, ReturnMode][]];
@@ -142,12 +166,16 @@ export function TypeFromShape<T extends object>(shape: T, includeBlanks = false)
     if (Array.isArray(shape)) {
         return `[${shape.map((s) => TypeFromShape(s, includeBlanks)).join(", ")}]`;
     }
-    switch(typeof shape) {
+    switch (typeof shape) {
         case "number":
-        case "string":
         case "boolean":
         case "bigint":
             return typeof shape;
+        case "string":
+            if ((shape as string).trim() === "") {
+                return "string";
+            }
+            return shape;
         case "object":
             break;
         case "function": throw new Error("Functions cannot be used over network");
@@ -159,7 +187,7 @@ export function TypeFromShape<T extends object>(shape: T, includeBlanks = false)
     const params = pairs.map(([key, value]) => {
         return `${SafeName(key)}: ${TypeFromShape(value, includeBlanks)}`;
     });
-    if(includeBlanks) {
+    if (includeBlanks) {
         return `{${blanks.join(", ")}}: {${params.join(", ")}}`;
     }
     return `{${params.join(", ")}}`;

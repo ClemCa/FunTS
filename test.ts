@@ -12,7 +12,7 @@ app.in('/')
     })
     .transform(({ a, b, c }) => ({ a, b: b + 1, c }))
     .do(({ a, b, c }) => console.log("Hello " + a + b + c))
-    .dynamic(() => "super")
+    .dynamic(() => "super", "")
     .withoutDo()
     // .accepted({ a: 1, b: 2, c: 3 })
     // .inspect({ a: 1, b: 2, c: 3 }, 2, { a: 1, b: 3, c: 3 })
@@ -23,7 +23,21 @@ app.in('/').status(403, 'Forbidden')
 
 app.in('/noshape/').status(200, 'OK')
 
-app.export('B:\\SideProjects\\FunTS-front\\test\\schema.ts');
+// infers to an union of both objects
+app.in('/test/').dynamic(({}) => ({ a: 1, b: 2 }), [{ a: 0, b: 0 }, { c: 0, b: 0 }]);
+// infers to the object type
+app.in('/test2/').dynamic(({}) => ({ a: 1, b: 2 }), { a: 0, b: 0 });
+
+app.in('/test3/').static([1, 2, 3]);
+app.in('/test4/').static([0]);
+
+// infers to any
+app.in('/test5/').dynamic(({}) => 1, []);
+// infers to number[]
+app.in('/test5/').dynamic(({}) => [0, 1, 2], [0]);
+
+
+app.export('schema.ts');
 app.start();
 
 // make a request to test

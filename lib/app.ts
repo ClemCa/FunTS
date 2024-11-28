@@ -15,6 +15,20 @@ export type UnshapenPipeline<T> = {
     shape<U>(shape: U): Pipeline<U>;
 } & Pipeline<T>;
 
+type IsUnion<T, U extends T = T> =
+    (T extends any ?
+    (U extends T ? false : true)
+        : never) extends false ? false : true
+
+type IsUniformArray<T extends any[]> = IsUnion<T[number]> extends true ? false : true;
+
+type IsEmptyArray<T extends any[]> = T[number] extends never ? true : false;
+
+type InferTypeUnionFromArray<T extends any[]> = T extends (infer U)[] ? U : never;
+type UnionArray<T extends any[]> = IsUniformArray<T> extends false ? InferTypeUnionFromArray<T> : InferTypeUnionFromArray<T>[];
+type DynamicArray<T> = T extends any[] ? IsEmptyArray<T> extends false ? UnionArray<T> : any : T;
+
+
 export type Pipeline<T> = {
     where: (fn: (args: T) => boolean) => Pipeline<T>;
     do: (action: (args: T) => void) => Pipeline<T>;
@@ -22,7 +36,7 @@ export type Pipeline<T> = {
     transform<U>(fn: (args: T) => U): Pipeline<U>;
     close: () => StaticAssertable<WithSideEffects>;
     static<U>(result: U, shape?: U): StaticAssertable<WithSideEffects>;
-    dynamic<U>(fn: (args: T) => U, shape?: U): DynamicAssertable<WithSideEffects>;
+    dynamic<U>(fn: (args: T) => DynamicArray<U>, shape?: U): DynamicAssertable<WithSideEffects>;
     status: (code: number, message: string) => StaticAssertable<WithSideEffects>;
 };
 
