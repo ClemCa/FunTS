@@ -82,7 +82,7 @@ function SchemaToString(schema: object, level = 0) {
         return `   ${key}: ${SchemaToString(value, level + 1)}`;
     }).join(",\n" + spaces)
         }\n${spaces}}`;
-    if(result.indexOf("=> unknown") !== -1) {
+    if (result.indexOf("=> unknown") !== -1) {
         const count = result.match(/=> unknown/g).length;
         console.warn(`Warning: ${count} return types in the schema are unknown`);
     }
@@ -95,13 +95,23 @@ function ConvertShapeToFunctionType(shape: [object, ReturnMode]) {
         case "void": return `(${params}) => void`;
         case "status": return `(${params}) => [StatusCode, string]`;
         case "unknown": return `(${params}) => unknown`;
-        default: {
+        default: { // ! there's likely a bug hiding here, especially in the dynamic part
             if (shape[1][0] === "clemDyn") {
                 const variants = shape[1][1];
                 if (variants.length === 0) {
                     return `(${params}) => any`;
                 }
-                return `(${params}) => (${variants.map((v) => TypeFromShape(v)).join(" | ")})`;
+                if(variants.length === 1) {
+                    if(Array.isArray(variants[0])) {
+                        return `(${params}) => ${variants[0].map((v) => TypeFromShape(v))
+                            .reduce((acc, curr) => { if (acc.indexOf(curr) === -1) { acc.push(curr); } return acc; }, [])
+                            .join(" | ")}[]`;
+                    }
+                    return `(${params}) => ${TypeFromShape(variants[0], undefined, true)}[]`;
+                }
+                return `(${params}) => (${variants.map((v) => TypeFromShape(v, undefined, true))
+                    .reduce((acc, curr) => { if (acc.indexOf(curr) === -1) { acc.push(curr); } return acc; }, [])
+                    .join(" | ")})`;
             }
             const [returnType] = shape[1];
             if (Array.isArray(returnType)) {
@@ -162,9 +172,20 @@ function IsNameSafe(name: string) {
     return /^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name);
 }
 
-export function TypeFromShape<T extends object>(shape: T, includeBlanks = false): string {
+export function TypeFromShape<T extends object>(shape: T, includeBlanks = false, dynamicMode = false): string {
     if (Array.isArray(shape)) {
-        return `[${shape.map((s) => TypeFromShape(s, includeBlanks)).join(", ")}]`;
+        if (dynamicMode) {
+            if (shape.length === 0) {
+                return "any";
+            }
+            if (shape.length === 1) {
+                return TypeFromShape(shape[0], includeBlanks, dynamicMode) + "[]";
+            }
+            return shape.map((s) => TypeFromShape(s, includeBlanks, dynamicMode))
+                .reduce((acc, curr) => { if (acc.indexOf(curr) === -1) { acc.push(curr); } return acc; }, [])
+                .join(" | ");
+        }
+        return `[${shape.map((s) => TypeFromShape(s, includeBlanks, dynamicMode)).join(", ")}]`;
     }
     switch (typeof shape) {
         case "number":

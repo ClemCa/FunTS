@@ -31,11 +31,20 @@ app.in('/test2/').dynamic(({}) => ({ a: 1, b: 2 }), { a: 0, b: 0 });
 app.in('/test3/').static([1, 2, 3]);
 app.in('/test4/').static([0]);
 
+app.in('/test2/').dynamic(({}) => ({ a: [1, 2], b: {
+    a: [1],
+    b: 1
+} }), { a: [0, 0], b: { a: [0], b: 0 } });
+
 // infers to any
 app.in('/test5/').dynamic(({}) => 1, []);
 // infers to number[]
 app.in('/test5/').dynamic(({}) => [0, 1, 2], [0]);
 
+
+app.in('/test5/').dynamic(({}) => true, [false, 0]);
+
+app.in('/test5/').dynamic(({}) => [true, 0], [[false, 0]]);
 
 app.export('schema.ts');
 app.start();
