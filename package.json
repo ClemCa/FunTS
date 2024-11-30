@@ -1,11 +1,11 @@
 {
   "name": "clemfun-ts",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "start": "node dist/index.js",
-    "build": "tsc && tsc-alias",
+    "build": "rm -f schema.ts && tsc && tsc-alias",
     "test": "concurrently \"tsc-watch --onSuccess 'tsc-alias'\" \"nodemon ./dist/test.js\""
   },
   "repository": {
@@ -33,7 +33,9 @@
     "/dist/**/*.js",
     "/dist/**/*.d.ts",
     "!/dist/test.js",
-    "!/dist/test.d.ts"
+    "!/dist/test.d.ts",
+    "!/dist/schema.js",
+    "!/dist/schema.d.ts"
   ],
   "description": ""
 }
