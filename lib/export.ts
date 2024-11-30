@@ -189,11 +189,14 @@ export function TypeFromShape<T extends object>(shape: T, includeBlanks = false,
     }
     switch (typeof shape) {
         case "number":
+            if (shape !== 0) {
+                return (shape as number).toString();
+            }
         case "boolean":
         case "bigint":
             return typeof shape;
         case "string":
-            if ((shape as string).trim() === "") {
+            if ((shape as string).trim() !== "") {
                 return "string";
             }
             return shape;
