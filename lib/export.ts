@@ -199,7 +199,7 @@ export function TypeFromShape<T extends object>(shape: T, includeBlanks = false,
             if ((shape as string).trim() === "") {
                 return "string";
             }
-            return shape;
+            return '"'+shape+'"';
         case "object":
             break;
         case "function": throw new Error("Functions cannot be used over network");
