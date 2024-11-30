@@ -47,6 +47,7 @@ app.in('/test5/').dynamic(({}) => true, [false, 0]);
 app.in('/test5/').dynamic(({}) => [true, 0], [[false, 0]]);
 app.in('/test6/').dynamic(({}) => ({a: true}), {a: false} as const);
 
+app.in("/test7/").static("hello");
 
 app.export('schema.ts');
 app.start();

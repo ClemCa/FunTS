@@ -91,7 +91,7 @@ function ApplyTransform<T, U>(app: Pipeline<T>, fn: (args: T) => U) {
 }
 
 function ApplyOut<T>(app: Pipeline<T>, mode, out: (value: T) => void | any, shape?: object | object[]) {
-    app['__value'].pipeline.push([mode, out, mode === "static" ? TypeFromShape(out) : shape]);
+    app['__value'].pipeline.push([mode, out, mode === "static" ? TypeFromShape(out, undefined, undefined, true) : shape]);
     app['__value'].out(app['__value']);
     const id = pipelineCount.update((v) => v + 1) + "("+app['__value'].in+")";
     if(mode === "dynamic")

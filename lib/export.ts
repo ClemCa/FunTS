@@ -2,6 +2,7 @@ import { StatusCode } from "./auxiliary";
 import { store } from "./internal";
 import prompt from "prompt-sync";
 import fs from "fs";
+import { LogReturn } from "./debug";
 
 export function Export(path?: string) {
     const g = GenerateSchema();
@@ -170,7 +171,7 @@ function IsNameSafe(name: string) {
     return /^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name);
 }
 
-export function TypeFromShape<T extends object>(shape: T, includeBlanks = false, dynamicMode = false): string {
+export function TypeFromShape<T extends object>(shape: T, includeBlanks = false, dynamicMode = false, wrapString=false): string {
     if (Array.isArray(shape)) {
         if (dynamicMode) {
             if (shape.length === 0) {
@@ -197,7 +198,10 @@ export function TypeFromShape<T extends object>(shape: T, includeBlanks = false,
             if ((shape as string).trim() === "") {
                 return "string";
             }
-            return '"'+shape+'"';
+            if(wrapString || dynamicMode) {
+                return `"${shape}"`;
+            }
+            return shape;
         case "object":
             break;
         case "function": throw new Error("Functions cannot be used over network");
