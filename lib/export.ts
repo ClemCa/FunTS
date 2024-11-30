@@ -98,6 +98,9 @@ function ConvertShapeToFunctionType(shape: [object, ReturnMode]) {
         default: { // ! there's likely a bug hiding here, especially in the dynamic part
             if (shape[1][0] === "clemDyn") {
                 const variants = shape[1][1];
+                if(!Array.isArray(variants)) {
+                    return `(${params}) => ${TypeFromShape(variants, undefined, true)}[]`;
+                }
                 if (variants.length === 0) {
                     return `(${params}) => any`;
                 }
@@ -142,12 +145,7 @@ function GenerateSchema() {
                 if (returnInfo[2] === undefined) {
                     return [shape, "unknown"] as [object, ReturnMode];
                 }
-                if (Array.isArray(returnInfo[2])) {
-                    if (returnInfo[2].length != 1) {
-                        return [shape, ["clemDyn", returnInfo[2]]] as [object, ReturnMode];
-                    }
-                }
-                return [shape, [returnInfo[2]]] as [object, ReturnMode];
+                return [shape, ["clemDyn", returnInfo[2]]] as [object, ReturnMode];
             } else {
                 return [shape, typeof returnInfo[2] === "undefined" ? "unknown" : [returnInfo[2]]] as [object, ReturnMode];
             }

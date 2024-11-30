@@ -51,8 +51,8 @@ app.in('/test6/').dynamic(({}) => ({a: true}), {a: false} as const);
 app.export('schema.ts');
 app.start();
 
-// make a request to test
 
+// make a request to test
 fetch('http://localhost:3000/', {
     method: 'POST',
     headers: {
