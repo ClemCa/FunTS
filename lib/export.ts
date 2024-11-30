@@ -196,7 +196,7 @@ export function TypeFromShape<T extends object>(shape: T, includeBlanks = false,
         case "bigint":
             return typeof shape;
         case "string":
-            if ((shape as string).trim() !== "") {
+            if ((shape as string).trim() === "") {
                 return "string";
             }
             return shape;
@@ -209,7 +209,7 @@ export function TypeFromShape<T extends object>(shape: T, includeBlanks = false,
         return SafeName(key);
     });
     const params = pairs.map(([key, value]) => {
-        return `${SafeName(key)}: ${TypeFromShape(value, includeBlanks)}`;
+        return `${SafeName(key)}: ${TypeFromShape(value, includeBlanks, dynamicMode)}`;
     });
     if (includeBlanks) {
         return `{${blanks.join(", ")}}: {${params.join(", ")}}`;
