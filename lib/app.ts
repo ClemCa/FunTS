@@ -17,7 +17,7 @@ export type UnshapenPipeline<T> = {
 
 // ! type magic below, you spent hours on several iterations of this, only touch if necessary
 
-type HardTypeToType<T> = T extends number ? number : T extends string ? string : T extends boolean ? boolean : T;
+type HardTypeToType<T> = T extends true ? boolean : T extends false ? boolean : T;
 
 type IsUnion<T, U extends T = T> =
     (T extends any ?
@@ -35,13 +35,13 @@ type UnionObject<T extends object> = {
 }
 
 type UnionArray<T extends any[] | readonly any[]> = IsUniformArray<T> extends false ? InferTypeUnionFromArray<T> : IsArrayOfArray<T> extends true ? InferTypeUnionFromArray<T> : InferTypeUnionFromArray<T>[];
-type DynamicArray<T> = T extends any[] | readonly any[] ? IsEmptyArray<T> extends false ? UnionArray<T> : any : T;
+type DynamicArray<T> = NoReadonly<T extends any[] | readonly any[] ? IsEmptyArray<T> extends false ? UnionArray<T> : any : T extends object ? DynamicObject<T> : HardTypeToType<T>>;
 type DynamicObject<T extends object> = UnionObject<T>;
+type DynamicAny<T> = T extends any[] | readonly any[] ? DynamicArray<T> : T extends object ? DynamicObject<T> : HardTypeToType<T>;
 
-type DynamicAny<T> = NoReadonly<T extends any[] | readonly any[] ? DynamicArray<T> : T extends object ? DynamicObject<T> : HardTypeToType<T>>;
 type NoReadonly<T> = T extends readonly (infer U)[] ? U[] :
     T extends object ? {
-        -readonly [K in keyof T]: T[K];
+        -readonly [K in keyof T]: NoReadonly<T[K]>;
     } : T;
 
 export type Pipeline<T> = {
