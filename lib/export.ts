@@ -56,27 +56,86 @@ function SchemaToExport(schema: object) {
 export default schema`;
 }
 
-function DeClemDyn(value: any) {
-    if(typeof value === "object") {
-        if(Array.isArray(value)) {
-            if(value.length === 2 && value[0] === "clemDyn") {
+function DeClemDyn(value: any, in$ = false) {
+    if (typeof value === "object") {
+        if (Array.isArray(value)) {
+            if (value.length === 2 && value[0] === "clemDyn") {
+                // console.log("dedyn", value[1], DeDyn(value[1]));
                 return DeDyn(value[1]);
             }
-            return value.map((v) => DeClemDyn(v));
+            return value.map((v) => DeClemDyn(v, in$));
         }
         return Object.fromEntries(Object.entries(value).map(([key, value]) => {
-            return [key, DeClemDyn(value)];
+            return [key, DeClemDyn(value, key.startsWith("$") || in$)];
         }));
+    }
+    if(in$) {
+        return StaticDedyn(value);
     }
     return value;
 }
 
+function StaticDedyn(value: unknown) {
+    /*
+    possibilities:
+    - [1, 2, 3]
+    - [number]
+    - number[]
+    - (boolean | number)[]
+    - "static string"
+    */
+    if (typeof value === "string") {
+        if (value.startsWith('"')) {
+            return value.slice(1, -1);
+        }
+        if (value.startsWith("[")) {
+            if (value.indexOf(",") !== -1) {
+                return value.slice(1, -1).split(", ").map((v) => StaticDedyn(v));
+            }
+            return [StaticDedyn(value.slice(1, -1))];
+        }
+        if (value.endsWith("[]")) {
+            return [StaticDedyn(value.slice(0, -2))];
+        }
+        if (value.startsWith("(")) {
+            const vals = value.slice(1, -1).split(" | ").map((v) => StaticDedyn(v));
+            if (vals.length === 1) {
+                return vals[0];
+            }
+            return vals;
+        }
+        switch (value) {
+            case "number": return 0;
+            case "boolean": return false;
+            case "string": return "";
+            case "undefined": return undefined;
+            case "any": return null;
+            case "null": return null;
+            case "true": return true;
+            case "false": return false;
+            case "unknown": return null;
+        }
+        if (!isNaN(Number(value))) {
+            return Number(value);
+        }
+        if(value === "status") {
+            return StatusCode.SuccessOK;
+        }
+        console.warn("Unknown static value: " + value);
+    }
+    if (typeof value === "number" || typeof value === "boolean") {
+        return value;
+    }
+    console.warn("Unhandled type in raw: ", typeof value, "(", value, ")");
+    return value;
+}
+
 function DeDyn(value: any) {
-    if(typeof value === "object") {
-        if(Array.isArray(value)) {
-            if(value.length === 0) return null;
-            if(value.length === 1) {
-                if(Array.isArray(value[0])) {
+    if (typeof value === "object") {
+        if (Array.isArray(value)) {
+            if (value.length === 0) return null;
+            if (value.length === 1) {
+                if (Array.isArray(value[0])) {
                     return value[0].map((v) => DeDyn(v));
                 }
                 return DeDyn(value[0]);
@@ -133,17 +192,17 @@ function ConvertShapeToFunctionType(shape: [object, ReturnMode]) {
         default: { // ! there's likely a bug hiding here, especially in the dynamic part
             if (shape[1][0] === "clemDyn") {
                 const variants = shape[1][1];
-                if(!Array.isArray(variants)) {
+                if (!Array.isArray(variants)) {
                     return `(${params}) => ${TypeFromShape(variants, undefined, true)}[]`;
                 }
                 if (variants.length === 0) {
                     return `(${params}) => any`;
                 }
-                if(variants.length === 1) {
-                    if(Array.isArray(variants[0])) {
-                        return `(${params}) => ${variants[0].map((v) => TypeFromShape(v))
+                if (variants.length === 1) {
+                    if (Array.isArray(variants[0])) {
+                        return `(${params}) => (${variants[0].map((v) => TypeFromShape(v))
                             .reduce((acc, curr) => { if (acc.indexOf(curr) === -1) { acc.push(curr); } return acc; }, [])
-                            .join(" | ")}[]`;
+                            .join(" | ")})[]`;
                     }
                     return `(${params}) => ${TypeFromShape(variants[0], undefined, true)}[]`;
                 }
@@ -205,7 +264,7 @@ function IsNameSafe(name: string) {
     return /^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name);
 }
 
-export function TypeFromShape<T extends object>(shape: T, includeBlanks = false, dynamicMode = false, wrapString=false): string {
+export function TypeFromShape<T extends object>(shape: T, includeBlanks = false, dynamicMode = false, wrapString = false): string {
     if (Array.isArray(shape)) {
         if (dynamicMode) {
             if (shape.length === 0) {
@@ -232,7 +291,7 @@ export function TypeFromShape<T extends object>(shape: T, includeBlanks = false,
             if ((shape as string).trim() === "") {
                 return "string";
             }
-            if(wrapString || dynamicMode) {
+            if (wrapString || dynamicMode) {
                 return `"${shape}"`;
             }
             return shape;
