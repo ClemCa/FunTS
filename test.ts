@@ -49,6 +49,7 @@ app.in('/test9/').dynamic(({}) => ({a: true}), {a: false} as const);
 
 app.in("/test10/").static("hello");
 
+app.in("/test11/").dynamic(({}) => ({ a: ["hello", "world"] }), { a: [""] });
 
 app.export('schema.ts');
 app.start();

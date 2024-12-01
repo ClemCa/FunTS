@@ -48,7 +48,7 @@ function SchemaToExport(schema: object) {
     const schemaString = SchemaToString(schema, 1);
     return `enum StatusCode {\n   ${Object.entries(StatusCode).filter(([k, v]) => typeof v !== "string").map(([key, value]) => `${key} = ${value}`).join(",\n   ")
         }\n}\nexport type Schema = ${schemaString
-        }\nconst raw = ${JSON.stringify(DeClemDyn(schema))
+        }\nconst raw = ${JSON.stringify(DeClemDyn(schema)).replace('"StatusCode.SuccessOK"', "StatusCode.SuccessOK")
         }\ntype Raw<T> = object & {"::": {}}\nexport const schema = {
    ...raw,
    "::": {}
@@ -60,16 +60,22 @@ function DeClemDyn(value: any, in$ = false) {
     if (typeof value === "object") {
         if (Array.isArray(value)) {
             if (value.length === 2 && value[0] === "clemDyn") {
-                // console.log("dedyn", value[1], DeDyn(value[1]));
                 return DeDyn(value[1]);
             }
             return value.map((v) => DeClemDyn(v, in$));
         }
         return Object.fromEntries(Object.entries(value).map(([key, value]) => {
+            if (key.startsWith("$") && typeof value === "object" && !Array.isArray(value[0])) {
+                if (!Array.isArray(value[1])) {
+                    return [key, DeClemDyn(value[1], true)];
+                } else if (value[1][0] !== "clemDyn") {
+                    return [key, DeClemDyn(value[1][0], true)];
+                }
+            }
             return [key, DeClemDyn(value, key.startsWith("$") || in$)];
         }));
     }
-    if(in$) {
+    if (in$) {
         return StaticDedyn(value);
     }
     return value;
@@ -118,8 +124,8 @@ function StaticDedyn(value: unknown) {
         if (!isNaN(Number(value))) {
             return Number(value);
         }
-        if(value === "status") {
-            return StatusCode.SuccessOK;
+        if (value === "status") {
+            return "StatusCode.SuccessOK";
         }
         console.warn("Unknown static value: " + value);
     }
@@ -135,10 +141,7 @@ function DeDyn(value: any) {
         if (Array.isArray(value)) {
             if (value.length === 0) return null;
             if (value.length === 1) {
-                if (Array.isArray(value[0])) {
-                    return value[0].map((v) => DeDyn(v));
-                }
-                return DeDyn(value[0]);
+                return [];
             }
             return DeDyn(value[0]); // first is default
         }
