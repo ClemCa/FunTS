@@ -49,10 +49,10 @@ function SchemaToExport(schema: object) {
     return `enum StatusCode {\n   ${Object.entries(StatusCode).filter(([k, v]) => typeof v !== "string").map(([key, value]) => `${key} = ${value}`).join(",\n   ")
         }\n}\nexport type Schema = ${schemaString
         }\nconst raw = ${JSON.stringify(DeClemDyn(schema)).replace('"StatusCode.SuccessOK"', "StatusCode.SuccessOK")
-        }\ntype Raw<T> = object & {"::": {}}\nexport const schema = {
+        }\nexport const schema = {
    ...raw,
    "::": {}
-} as Raw<Schema>
+} as unknown as Schema;
 export default schema`;
 }
 
