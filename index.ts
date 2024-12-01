@@ -18,6 +18,10 @@ export function HasApp() {
     return app.get() !== undefined;
 }
 
+export function GetApp() {
+    return app.get();
+}
+
 export function CreateApp(override: boolean = false) {
     if (app.get() !== undefined) {
         if(!override) {   
