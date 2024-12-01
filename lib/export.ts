@@ -56,19 +56,19 @@ function SchemaToExport(schema: object) {
 export default schema`;
 }
 
-function DeClemDyn(schema: object) {
-    return Object.fromEntries(Object.entries(schema).map(([key, value]) => {
-        if(typeof value === "object") {
-            if(Array.isArray(value)) {
-                if(value.length === 2 && value[0] === "clemDyn") {
-                    return [key, value[1]];
-                }
-                return [key, value.map((v) => DeClemDyn(v))];
+function DeClemDyn(value: object) {
+    if(typeof value === "object") {
+        if(Array.isArray(value)) {
+            if(value.length === 2 && value[0] === "clemDyn") {
+                return DeClemDyn(value[1]);
             }
-            return [key, DeClemDyn(value)];
+            return value.map((v) => DeClemDyn(v));
         }
-        return [key, value];
-    }));
+        return Object.fromEntries(Object.entries(value).map(([key, value]) => {
+            return [key, DeClemDyn(value)];
+        }));
+    }
+    return value;
 }
 
 function SchemaToString(schema: object, level = 0) {
