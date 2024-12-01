@@ -220,6 +220,8 @@ export function TypeFromShape<T extends object>(shape: T, includeBlanks = false,
         case "object":
             break;
         case "function": throw new Error("Functions cannot be used over network");
+        case "undefined": return "undefined";
+        default: throw new Error("Unsupported type: " + typeof shape);
     }
     const pairs = Object.entries(shape);
     const blanks = pairs.map(([key, value]) => {
