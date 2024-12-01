@@ -14,9 +14,18 @@ export function GetStore() {
     return userStore;
 }
 
-export function CreateApp() {
+export function HasApp() {
+    return app.get() !== undefined;
+}
+
+export function CreateApp(override: boolean = false) {
     if (app.get() !== undefined) {
-        throw new Error("App already exists");
+        if(!override) {   
+            throw new Error("App already exists");
+        }
+        const previous = app.get();
+        // @ts-ignore dunno why express types are this messed up
+        previous.close();
     }
     app.set(require('express')());
     return EmptyPipeline(RegisterPipeline, StartApp);
