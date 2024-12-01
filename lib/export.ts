@@ -23,7 +23,7 @@ export function Export(path?: string) {
 }
 
 export function GetSchema() {
-    return GenerateSchema();
+    return DeClemDyn(GenerateSchema());
 }
 
 function SaveWithDefault(path: string, content: string, defaultName: string, extension: string, mode: '/' | '\\') {
@@ -48,12 +48,27 @@ function SchemaToExport(schema: object) {
     const schemaString = SchemaToString(schema, 1);
     return `enum StatusCode {\n   ${Object.entries(StatusCode).filter(([k, v]) => typeof v !== "string").map(([key, value]) => `${key} = ${value}`).join(",\n   ")
         }\n}\nexport type Schema = ${schemaString
-        }\nconst raw = ${JSON.stringify(schema)
+        }\nconst raw = ${JSON.stringify(DeClemDyn(schema))
         }\ntype Raw<T> = object & {"::": {}}\nexport const schema = {
    ...raw,
    "::": {}
 } as Raw<Schema>
 export default schema`;
+}
+
+function DeClemDyn(schema: object) {
+    return Object.fromEntries(Object.entries(schema).map(([key, value]) => {
+        if(typeof value === "object") {
+            if(Array.isArray(value)) {
+                if(value.length === 2 && value[0] === "clemDyn") {
+                    return [key, value[1]];
+                }
+                return [key, value.map((v) => DeClemDyn(v))];
+            }
+            return [key, DeClemDyn(value)];
+        }
+        return [key, value];
+    }));
 }
 
 function SchemaToString(schema: object, level = 0) {
