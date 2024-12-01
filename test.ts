@@ -39,15 +39,16 @@ app.in('/test2/').dynamic(({}) => ({ a: [1, 2], b: {
 // infers to any
 app.in('/test5/').dynamic(({}) => 1, []);
 // infers to number[]
-app.in('/test5/').dynamic(({}) => [0, 1, 2], [0]);
+app.in('/test6/').dynamic(({}) => [0, 1, 2], [0]);
 
 
-app.in('/test5/').dynamic(({}) => true, [false, 0]);
+app.in('/test7/').dynamic(({}) => true, [false, 0]);
 
-app.in('/test5/').dynamic(({}) => [true, 0], [[false, 0]]);
-app.in('/test6/').dynamic(({}) => ({a: true}), {a: false} as const);
+app.in('/test8/').dynamic(({}) => [true, 0], [[false, 0]]);
+app.in('/test9/').dynamic(({}) => ({a: true}), {a: false} as const);
 
-app.in("/test7/").static("hello");
+app.in("/test10/").static("hello");
+
 
 app.export('schema.ts');
 app.start();

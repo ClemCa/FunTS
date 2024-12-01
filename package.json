@@ -1,12 +1,12 @@
 {
   "name": "clemfun-ts",
-  "version": "0.0.28",
+  "version": "0.0.29",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "start": "node dist/index.js",
     "build": "rm -f schema.ts && tsc && tsc-alias",
-    "test": "concurrently \"tsc-watch --onSuccess 'tsc-alias'\" \"nodemon ./dist/test.js\""
+    "test": "node dist/test.js"
   },
   "repository": {
     "type": "git",

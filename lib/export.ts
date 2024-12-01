@@ -81,7 +81,7 @@ function DeDyn(value: any) {
                 }
                 return DeDyn(value[0]);
             }
-            return value.map((v) => DeDyn(v));
+            return DeDyn(value[0]); // first is default
         }
         return Object.fromEntries(Object.entries(value).map(([key, value]) => {
             return [key, DeDyn(value)];
