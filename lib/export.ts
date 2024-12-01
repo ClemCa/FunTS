@@ -56,16 +56,35 @@ function SchemaToExport(schema: object) {
 export default schema`;
 }
 
-function DeClemDyn(value: object) {
+function DeClemDyn(value: any) {
     if(typeof value === "object") {
         if(Array.isArray(value)) {
             if(value.length === 2 && value[0] === "clemDyn") {
-                return DeClemDyn(value[1]);
+                return DeDyn(value[1]);
             }
             return value.map((v) => DeClemDyn(v));
         }
         return Object.fromEntries(Object.entries(value).map(([key, value]) => {
             return [key, DeClemDyn(value)];
+        }));
+    }
+    return value;
+}
+
+function DeDyn(value: any) {
+    if(typeof value === "object") {
+        if(Array.isArray(value)) {
+            if(value.length === 0) return null;
+            if(value.length === 1) {
+                if(Array.isArray(value[0])) {
+                    return value[0].map((v) => DeDyn(v));
+                }
+                return DeDyn(value[0]);
+            }
+            return value.map((v) => DeDyn(v));
+        }
+        return Object.fromEntries(Object.entries(value).map(([key, value]) => {
+            return [key, DeDyn(value)];
         }));
     }
     return value;
