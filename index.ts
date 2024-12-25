@@ -75,13 +75,11 @@ function StartApp(port: number = 3000, ignoreFailedAssertions: boolean = false) 
     expressApp.use(json());
     allPipelines.forEach((pipelineGroup, path) => {
         expressApp.post(path, (req, res) => {
-            let matched = false;
             pipelineGroup.forEach((p) => {
-                if(!matched && ProcessPipeline(p, req, res)) {
-                    matched = true;
+                if(ProcessPipeline(p, req, res)) {
+                    return;
                 }
             });
-            if(matched) return;
             res.status(404).send("Not found");
         });
     });

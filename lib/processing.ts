@@ -5,8 +5,12 @@ export function ProcessPipeline(__value: [string, any][], req: Request, res: Res
     const result = __value.length === 0 || PipelineStep(__value, 0, body);
     if (result) {
         if (Array.isArray(result)) {
-            res.status(result[0]).send(result[1]);
-            return true;
+            try {
+                res.status(result[0]).send(result[1]);
+                return true;
+            } catch (e) {
+                console.error("FunTS does not explicitely support sending naked arrays as responses, as it will try to interpret the first element as a status code.")
+            }
         }
         if (result === true) {
             res.status(200).send("OK");
