@@ -5,10 +5,12 @@ export function ProcessPipeline(__value: [string, any][], req: Request, res: Res
     const result = __value.length === 0 || PipelineStep(__value, 0, body);
     if (result) {
         if (Array.isArray(result)) {
-            try {
+            if(typeof result[0] === "number")
+            {
                 res.status(result[0]).send(result[1]);
                 return true;
-            } catch (e) {
+            }
+            else {
                 console.error("FunTS does not explicitely support sending naked arrays as responses, as it will try to interpret the first element as a status code.")
             }
         }
@@ -20,6 +22,33 @@ export function ProcessPipeline(__value: [string, any][], req: Request, res: Res
         return true;
     }
     return false;
+}
+
+export function ProcessPipelineBatch(__value: [string, any][], req: Request, res: Response) {
+    const bodies = req.body;
+    const results = bodies.map((body: any) => __value.length === 0 || PipelineStep(__value, 0, body));
+
+    if(results.all((x: any) => !x)) return false;
+
+    if(results.all((x: any) => x === true)) {
+        res.status(200).send("OK");
+        return true;
+    }
+    if(results.all((x: any) => Array.isArray(x))) {
+        const statusCodes = results.map((x: any) => x[0]);
+        if(statusCodes.all((x: any[]) => typeof x === "number")) {
+            const allStatuses = (statusCodes as any[]).map((x: any[]) => x[0] as number).reduce((arr, x) => { if(arr.includes(x)) return arr; arr.push(x); return arr; }, []);
+            if(allStatuses.length === 1) {
+                res.status(allStatuses[0]).send(results.map((x: any[]) => x[1]));
+                return true;
+            }
+            res.status(418).send(results.map((x: any[]) => x)); // needs status codes to be dealt with on the client side
+            return true;
+        } else {
+            console.error("FunTS does not explicitely support sending naked arrays as responses, as it will try to interpret the first element as a status code.")
+        }
+    }
+
 }
 
 export function PipelineStep(pipeline: [string, any][], step: number, body: object, stopAt?: number, returnBody?: boolean, noSideEffects?: boolean) {

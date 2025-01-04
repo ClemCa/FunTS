@@ -51,6 +51,7 @@ export type Pipeline<T> = {
     do: (action: (args: T) => void) => Pipeline<T>;
     pass<U>(args: U): Pipeline<ExpandableType<T, U>>;
     transform<U>(fn: (args: T) => U): Pipeline<U>;
+    batch: (allowBatching: boolean) => Pipeline<T>;
     close: () => StaticAssertable<WithSideEffects>;
     static<U>(result: U, shape?: U): StaticAssertable<WithSideEffects>;
     dynamic<U>(fn: (args: T) => StatusProtected<U>, shape?: U): DynamicAssertable<WithSideEffects>;

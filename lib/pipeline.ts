@@ -11,6 +11,7 @@ export function EmptyPipeline(outCallback: (value: any) => void, startCallback: 
         __value: {
             out: outCallback,
             start: startCallback,
+            batching: true,
         },
         in: (path: string) => ApplyIn(obj, path) as UnshapenPipeline<{}>,
         start: (port?: number, ignoreFailedAssertions?: boolean) => startCallback(port, ignoreFailedAssertions),
@@ -55,6 +56,7 @@ function ApplyIn<T>(app: App<T>, inVal: string): UnshapenPipeline<T> {
         do: (action) => ApplyDo(obj, action),
         pass: (args) => ApplyPass(obj, args),
         transform: (fn) => ApplyTransform(obj, fn),
+        batch: (allowBatching) => ApplyBatching(obj, allowBatching),
         static: (result) => ApplyOut(obj, "static", result),
         dynamic: (fn, shape) => ApplyOut(obj, "dynamic", fn, shape),
         close: () => ApplyOut(obj, "close", undefined),
@@ -88,6 +90,11 @@ function ApplyPass<T, U>(app: Pipeline<T>, args: U) {
 function ApplyTransform<T, U>(app: Pipeline<T>, fn: (args: T) => U) {
     app['__value'].pipeline.push(['transform', fn]);
     return app as unknown as Pipeline<U>;
+}
+
+function ApplyBatching<T>(app: Pipeline<T>, allowBatching: boolean) {
+    app['__value'].batching = allowBatching;
+    return app;
 }
 
 function ApplyOut<T>(app: Pipeline<T>, mode, out: (value: T) => void | any, shape?: object | object[]) {

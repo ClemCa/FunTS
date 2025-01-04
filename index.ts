@@ -8,7 +8,10 @@ import { store } from "lib/internal";
 const userStore = new Store();
 
 const app = store.new<Express>("app", undefined);
-const pipelines = store.new("pipelines", new Map<string, any[]>());
+const pipelines = store.new("pipelines", new Map<string, pipeline>());
+type pipeline = any[] & {
+    batching: boolean;
+}
 
 export function GetStore() {
     return userStore;
@@ -75,6 +78,15 @@ function StartApp(port: number = 3000, ignoreFailedAssertions: boolean = false) 
     expressApp.use(json());
     allPipelines.forEach((pipelineGroup, path) => {
         expressApp.post(path, (req, res) => {
+            if(req.header("batched") && req.header("batched") === "true") {
+                req.body.forEach((body: any) => {
+                    pipelineGroup.forEach((p) => {
+                        if(ProcessPipeline(p, body, res)) {
+                            return;
+                        }
+                    });
+                });
+            }
             pipelineGroup.forEach((p) => {
                 if(ProcessPipeline(p, req, res)) {
                     return;
@@ -90,9 +102,10 @@ function StartApp(port: number = 3000, ignoreFailedAssertions: boolean = false) 
 
 function RegisterPipeline(__value: any) {
     pipelines.update((v) => {
-        v = (v ?? new Map<string, any[]>());
-        const group = v.get(__value.in) ?? [];
+        v = (v ?? new Map<string, pipeline>());
+        const group = (v.get(__value.in) ?? []) as pipeline;
         group.push(__value.pipeline);
+        group["batching"] = __value.batching;
         v.set(__value.in, group);
         return v;
     });

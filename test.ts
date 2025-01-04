@@ -54,7 +54,7 @@ app.in("/test11/").dynamic(({}) => ({ a: ["hello", "world"] }), { a: [""] });
 app.in("/test12/").dynamic(({}) => ([200, ["hello", "world"]]), [""]);
 
 app.export('schema.ts');
-// app.start();
+app.start();
 
 
 // make a request to test
