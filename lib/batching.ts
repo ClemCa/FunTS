@@ -14,9 +14,11 @@ export function HandleBatch(allPipelines: Map<string, pipeline>, req: any, res: 
             console.log("Couldn't find pipeline for", path);
             return [404, "Not found"];
         }
-        const res = pipelineGroup.length === 0 || PipelineStep(pipelineGroup, 0, body);
-        if (res) {
-            return res;
+        for(const p of pipelineGroup) {
+            const result = pipelineGroup.length === 0 || PipelineStep(p, 0, body[1]);
+            if (result) {
+                return result;
+            }
         }
         return [404, "Not found"];
     });

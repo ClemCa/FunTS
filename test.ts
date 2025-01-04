@@ -57,17 +57,17 @@ app.export('schema.ts');
 app.start();
 
 
-fetch('http://localhost:3000/', {
+fetch('http://localhost:3000/batch', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
         'batched': 'true'
     },
-    body: JSON.stringify([{
+    body: JSON.stringify([["/", {
         a: 1,
         b: 1,
         c: 1
-    }, {a: 1, b: 2, c: 3}])
+    }], ["/", {a: 1, b: 2, c: 3}]])
 }).then(async res => {
     console.assert(res.status === 200, "Failed to batch");
     console.log(await res.json());
