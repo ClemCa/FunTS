@@ -196,7 +196,7 @@ function ConvertShapeToFunctionType(shape: [object, ReturnMode]) {
             if (shape[1][0] === "clemDyn") {
                 const variants = shape[1][1];
                 if (!Array.isArray(variants)) {
-                    return `(${params}) => ${TypeFromShape(variants, undefined, true)}[]`;
+                    return `(${params}) => ${TypeFromShape(variants, undefined, true)}`;
                 }
                 if (variants.length === 0) {
                     return `(${params}) => any`;

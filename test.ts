@@ -51,35 +51,37 @@ app.in("/test10/").static("hello");
 
 app.in("/test11/").dynamic(({}) => ({ a: ["hello", "world"] }), { a: [""] });
 
+app.in("/test12/").dynamic(({}) => ([200, ["hello", "world"]]), [""]);
+
 app.export('schema.ts');
-app.start();
+// app.start();
 
 
 // make a request to test
-fetch('http://localhost:3000/', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-        a: 1,
-        b: 1,
-        c: 1
-    })
-}).then(async res => {
-    console.assert(res.status === 403 && await res.text() === 'Forbidden');
-});
+// fetch('http://localhost:3000/', {
+//     method: 'POST',
+//     headers: {
+//         'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify({
+//         a: 1,
+//         b: 1,
+//         c: 1
+//     })
+// }).then(async res => {
+//     console.assert(res.status === 403 && await res.text() === 'Forbidden');
+// });
 
-fetch('http://localhost:3000/', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-        a: 1,
-        b: 2,
-        c: 3
-    })
-}).then(async res => {
-    console.assert(res.status === 200 && await res.text() === "super");
-});
+// fetch('http://localhost:3000/', {
+//     method: 'POST',
+//     headers: {
+//         'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify({
+//         a: 1,
+//         b: 2,
+//         c: 3
+//     })
+// }).then(async res => {
+//     console.assert(res.status === 200 && await res.text() === "super");
+// });

@@ -44,6 +44,8 @@ type NoReadonly<T> = T extends readonly (infer U)[] ? U[] :
         -readonly [K in keyof T]: NoReadonly<T[K]>;
     } : T;
 
+type StatusProtected<U> = [number, DynamicArray<U>] | DynamicArray<U>; 
+
 export type Pipeline<T> = {
     where: (fn: (args: T) => boolean) => Pipeline<T>;
     do: (action: (args: T) => void) => Pipeline<T>;
@@ -51,7 +53,7 @@ export type Pipeline<T> = {
     transform<U>(fn: (args: T) => U): Pipeline<U>;
     close: () => StaticAssertable<WithSideEffects>;
     static<U>(result: U, shape?: U): StaticAssertable<WithSideEffects>;
-    dynamic<U>(fn: (args: T) => DynamicArray<U>, shape?: U): DynamicAssertable<WithSideEffects>;
+    dynamic<U>(fn: (args: T) => StatusProtected<U>, shape?: U): DynamicAssertable<WithSideEffects>;
     status: (code: number, message: string) => StaticAssertable<WithSideEffects>;
 };
 
