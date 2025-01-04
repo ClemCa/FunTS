@@ -5,6 +5,9 @@ import { Export, GetSchema, TypeFromShape } from "./export";
 
 const store = new Store();
 const pipelineCount = store.new("pipelineIDs", 0);
+export type pipeline = any[] & {
+    batching: boolean;
+}
 
 export function EmptyPipeline(outCallback: (value: any) => void, startCallback: (port?: number, ignoreFailedAssertions?: boolean) => void) {
     const obj = {
@@ -43,6 +46,10 @@ export function EmptyPipeline(outCallback: (value: any) => void, startCallback: 
 
 
 function ApplyIn<T>(app: App<T>, inVal: string): UnshapenPipeline<T> {
+    const isolated = inVal.split("/").reduce((acc, val) => { if(val.trim() === "") return acc; acc.push(val); return acc; }, []);
+    if(isolated.length === 1 && isolated[0] === "batch") {
+        console.error("'batch' is a reserved path, the pipeline will be ignored");
+    }
     const obj = {
         ...app,
         __value: {

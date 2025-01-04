@@ -1,17 +1,15 @@
 import { Store } from "./lib/store";
 import { Express, json } from "express";
-import { EmptyPipeline } from "./lib/pipeline";
-import { ProcessPipeline } from "lib/processing";
+import { EmptyPipeline, pipeline } from "./lib/pipeline";
+import { ProcessPipeline, ProcessPipelineBatch } from "lib/processing";
 import { RunAsserts } from "lib/assertions";
 import { store } from "lib/internal";
+import { HandleBatch } from "lib/batching";
 
 const userStore = new Store();
 
 const app = store.new<Express>("app", undefined);
 const pipelines = store.new("pipelines", new Map<string, pipeline>());
-type pipeline = any[] & {
-    batching: boolean;
-}
 
 export function GetStore() {
     return userStore;
@@ -77,23 +75,28 @@ function StartApp(port: number = 3000, ignoreFailedAssertions: boolean = false) 
     }
     expressApp.use(json());
     allPipelines.forEach((pipelineGroup, path) => {
+        const isolated = path.split("/").reduce((acc, val) => { if(val.trim() === "") return acc; acc.push(val); return acc; }, []);
+        if(isolated.length === 1 && isolated[0] === "batch") {
+            return;
+        }
         expressApp.post(path, (req, res) => {
             if(req.header("batched") && req.header("batched") === "true") {
-                req.body.forEach((body: any) => {
-                    pipelineGroup.forEach((p) => {
-                        if(ProcessPipeline(p, body, res)) {
-                            return;
-                        }
-                    });
-                });
-            }
-            pipelineGroup.forEach((p) => {
-                if(ProcessPipeline(p, req, res)) {
+                if(ProcessPipelineBatch(pipelineGroup, req, res))
+                {
                     return;
                 }
-            });
+            } else {
+                pipelineGroup.forEach((p) => {
+                    if(ProcessPipeline(p, req, res)) {
+                        return;
+                    }
+                });    
+            }
             res.status(404).send("Not found");
         });
+    });
+    expressApp.post("/batch/", (req, res) => {
+        HandleBatch(allPipelines, req, res);
     });
     expressApp.listen(port, () => {
         console.log("Server started");

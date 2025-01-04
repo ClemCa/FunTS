@@ -48,7 +48,6 @@ export function ProcessPipelineBatch(__value: [string, any][], req: Request, res
             console.error("FunTS does not explicitely support sending naked arrays as responses, as it will try to interpret the first element as a status code.")
         }
     }
-
 }
 
 export function PipelineStep(pipeline: [string, any][], step: number, body: object, stopAt?: number, returnBody?: boolean, noSideEffects?: boolean) {
