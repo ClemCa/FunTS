@@ -57,31 +57,18 @@ app.export('schema.ts');
 app.start();
 
 
-// make a request to test
-// fetch('http://localhost:3000/', {
-//     method: 'POST',
-//     headers: {
-//         'Content-Type': 'application/json',
-//     },
-//     body: JSON.stringify({
-//         a: 1,
-//         b: 1,
-//         c: 1
-//     })
-// }).then(async res => {
-//     console.assert(res.status === 403 && await res.text() === 'Forbidden');
-// });
-
-// fetch('http://localhost:3000/', {
-//     method: 'POST',
-//     headers: {
-//         'Content-Type': 'application/json',
-//     },
-//     body: JSON.stringify({
-//         a: 1,
-//         b: 2,
-//         c: 3
-//     })
-// }).then(async res => {
-//     console.assert(res.status === 200 && await res.text() === "super");
-// });
+fetch('http://localhost:3000/', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'batched': 'true'
+    },
+    body: JSON.stringify([{
+        a: 1,
+        b: 1,
+        c: 1
+    }, {a: 1, b: 2, c: 3}])
+}).then(async res => {
+    console.assert(res.status === 200, "Failed to batch");
+    console.log(await res.json());
+});

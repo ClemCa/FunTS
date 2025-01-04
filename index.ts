@@ -86,11 +86,11 @@ function StartApp(port: number = 3000, ignoreFailedAssertions: boolean = false) 
                     return;
                 }
             } else {
-                pipelineGroup.forEach((p) => {
+                for (const p of pipelineGroup) {
                     if(ProcessPipeline(p, req, res)) {
                         return;
                     }
-                });    
+                }
             }
             res.status(404).send("Not found");
         });

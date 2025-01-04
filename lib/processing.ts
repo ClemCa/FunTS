@@ -24,19 +24,19 @@ export function ProcessPipeline(__value: [string, any][], req: Request, res: Res
     return false;
 }
 
-export function ProcessPipelineBatch(__value: [string, any][], req: Request, res: Response) {
-    const bodies = req.body;
-    const results = bodies.map((body: any) => __value.length === 0 || PipelineStep(__value, 0, body));
+export function ProcessPipelineBatch(pipelineGroup: [string, any][], req: Request, res: Response) {
+    const bodies = req.body as any[];
+    const results = bodies.map((body: any) => pipelineGroup.length === 0 || StepGroup(pipelineGroup, body));
+    console.log("results", results);
+    if(results.every((x: any) => !x)) return false;
 
-    if(results.all((x: any) => !x)) return false;
-
-    if(results.all((x: any) => x === true)) {
+    if(results.every((x: any) => x === true)) {
         res.status(200).send("OK");
         return true;
     }
-    if(results.all((x: any) => Array.isArray(x))) {
+    if(results.every((x: any) => Array.isArray(x))) {
         const statusCodes = results.map((x: any) => x[0]);
-        if(statusCodes.all((x: any[]) => typeof x === "number")) {
+        if(statusCodes.every((x: any[]) => typeof x === "number")) {
             const allStatuses = (statusCodes as any[]).map((x: any[]) => x[0] as number).reduce((arr, x) => { if(arr.includes(x)) return arr; arr.push(x); return arr; }, []);
             if(allStatuses.length === 1) {
                 res.status(allStatuses[0]).send(results.map((x: any[]) => x[1]));
@@ -48,6 +48,18 @@ export function ProcessPipelineBatch(__value: [string, any][], req: Request, res
             console.error("FunTS does not explicitely support sending naked arrays as responses, as it will try to interpret the first element as a status code.")
         }
     }
+    res.status(418).send(results); // client side needs to deal with the responses
+    return true;
+}
+
+function StepGroup(group, body) {
+    for (const pipeline of group) {
+        const result = PipelineStep(pipeline, 0, body);
+        if (result) {
+            return result;
+        }
+    }
+    return false;
 }
 
 export function PipelineStep(pipeline: [string, any][], step: number, body: object, stopAt?: number, returnBody?: boolean, noSideEffects?: boolean) {
