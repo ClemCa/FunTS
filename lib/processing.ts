@@ -42,13 +42,13 @@ export function ProcessPipelineBatch(pipelineGroup: [string, any][], req: Reques
                 res.status(allStatuses[0]).send(results.map((x: any[]) => x[1]));
                 return true;
             }
-            res.status(418).send(results.map((x: any[]) => x)); // needs status codes to be dealt with on the client side
+            res.status(200).send(results.map((x: any[]) => x)); // needs status codes to be dealt with on the client side
             return true;
         } else {
             console.error("FunTS does not explicitely support sending naked arrays as responses, as it will try to interpret the first element as a status code.")
         }
     }
-    res.status(418).send(results); // client side needs to deal with the responses
+    res.status(200).send(results); // client side needs to deal with the responses
     return true;
 }
 
