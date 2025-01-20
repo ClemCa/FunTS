@@ -61,14 +61,19 @@ fetch('http://localhost:3000/batch', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
-        'batched': 'true'
+        'batched': 'false'
     },
     body: JSON.stringify([["/", {
         a: 1,
         b: 1,
         c: 1
-    }], ["/", {a: 1, b: 2, c: 3}]])
+    }, false], ["/", {a: 1, b: 2, c: 3}, false]])
 }).then(async res => {
-    console.assert(res.status === 200, "Failed to batch");
-    console.log(await res.json());
+    if(res.status === 200) {
+        console.log(await res.json());
+    }
+    else {
+        console.error("Failed to batch");
+        console.log(await res.text());
+    }
 });
