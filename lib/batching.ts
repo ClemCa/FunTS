@@ -10,7 +10,7 @@ export function HandleBatch(allPipelines: Map<string, pipeline>, req: any, res: 
     console.log("batch", req.body);
     const results = req.body.map((body: any) => {
         const path = body[0];
-        if(path === "/batch/" || path === "/batch") {
+        if(path === "/batch/" || path === "/batch" || path === "batch/" || path === "batch") {
             let resValue = [400, "Internal error in nested batch"];
             const myRes = {
                 status: (code: number) => ({
@@ -43,6 +43,7 @@ export function HandleBatch(allPipelines: Map<string, pipeline>, req: any, res: 
         }
         resValue = [404, "Not found"];
         for (const p of pipelineGroup) {
+            console.log("Processing", p.name, "for", path);
             if(ProcessPipeline(p, req, myRes)) {
                 return resValue;
             }
