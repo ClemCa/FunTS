@@ -49,5 +49,6 @@ export function HandleBatch(allPipelines: Map<string, pipeline>, req: any, res: 
         }
         return resValue;
     });
+    console.log("batch results", results);
     res.status(200).send(results); // no need for teapot, as we never expect the same status code
 }
