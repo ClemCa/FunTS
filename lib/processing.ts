@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 
-export function ProcessPipeline(__value: [string, any][], req: Request, res: Response) {
+export async function ProcessPipeline(__value: [string, any][], req: Request, res: Response) {
     const body = req.body;
-    const result = __value.length === 0 || PipelineStep(__value, 0, body);
+    const result = __value.length === 0 ? true : await PipelineStep(__value, 0, body);
     if (result) {
         if (Array.isArray(result)) {
             if(typeof result[0] === "number")
@@ -24,9 +24,11 @@ export function ProcessPipeline(__value: [string, any][], req: Request, res: Res
     return false;
 }
 
-export function ProcessPipelineBatch(pipelineGroup: [string, any][], req: Request, res: Response) {
+export async function ProcessPipelineBatch(pipelineGroup: [string, any][], req: Request, res: Response) {
     const bodies = req.body as any[];
-    const results = bodies.map((body: any) => pipelineGroup.length === 0 || StepGroup(pipelineGroup, body));
+    const results = await Promise.all(
+        bodies.map((body: any) => pipelineGroup.length === 0 || StepGroup(pipelineGroup, body))
+    );
     console.log("results", results);
     if(results.every((x: any) => !x)) return false;
 
@@ -52,9 +54,9 @@ export function ProcessPipelineBatch(pipelineGroup: [string, any][], req: Reques
     return true;
 }
 
-function StepGroup(group, body) {
+async function StepGroup(group, body) {
     for (const pipeline of group) {
-        const result = PipelineStep(pipeline, 0, body);
+        const result = await PipelineStep(pipeline, 0, body);
         if (result) {
             return result;
         }
@@ -62,7 +64,7 @@ function StepGroup(group, body) {
     return false;
 }
 
-export function PipelineStep(pipeline: [string, any][], step: number, body: object, stopAt?: number, returnBody?: boolean, noSideEffects?: boolean) {
+export async function PipelineStep(pipeline: [string, any][], step: number, body: object, stopAt?: number, returnBody?: boolean, noSideEffects?: boolean) {
     function exit(value: any) {
         if (!returnBody) {
             return value;
@@ -80,27 +82,27 @@ export function PipelineStep(pipeline: [string, any][], step: number, body: obje
     if (action === "where") {
         const result = value(body);
         if (result) {
-            return PipelineStep(pipeline, step + 1, body, stopAt, returnBody, noSideEffects);
+            return await PipelineStep(pipeline, step + 1, body, stopAt, returnBody, noSideEffects);
         }
         return exit(false);
     }
     switch (action) {
         case "do":
             if(!noSideEffects) {
-                value(body);
+                await value(body);
             }
-            return PipelineStep(pipeline, step + 1, body, stopAt, returnBody, noSideEffects);
+            return await PipelineStep(pipeline, step + 1, body, stopAt, returnBody, noSideEffects);
         case "pass":
-            return PipelineStep(pipeline, step + 1, { ...body, ...value }, stopAt, returnBody, noSideEffects);
+            return await PipelineStep(pipeline, step + 1, { ...body, ...value }, stopAt, returnBody, noSideEffects);
         case "transform":
-            return PipelineStep(pipeline, step + 1, value(body), stopAt, returnBody, noSideEffects);
+            return await PipelineStep(pipeline, step + 1, value(body), stopAt, returnBody, noSideEffects);
         case "shape":
             if (!CheckShape(value, body)) return false;
-            return PipelineStep(pipeline, step + 1, body, stopAt, returnBody, noSideEffects);
+            return await PipelineStep(pipeline, step + 1, body, stopAt, returnBody, noSideEffects);
         case "static":
             return exit(value);
         case "dynamic":
-            return exit(value(body));
+            return exit(await value(body));
         case "close":
             return exit(true);
         case "status":

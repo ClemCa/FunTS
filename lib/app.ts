@@ -44,17 +44,18 @@ type NoReadonly<T> = T extends readonly (infer U)[] ? U[] :
         -readonly [K in keyof T]: NoReadonly<T[K]>;
     } : T;
 
-type StatusProtected<U> = [number, DynamicArray<U>] | DynamicArray<U>; 
+type StatusProtected<U> = [number, DynamicArray<U>] | DynamicArray<U>;
+type OptionalPromise<T> = Promise<T> | T
 
 export type Pipeline<T> = {
     where: (fn: (args: T) => boolean) => Pipeline<T>;
     do: (action: (args: T) => void) => Pipeline<T>;
     pass<U>(args: U): Pipeline<ExpandableType<T, U>>;
-    transform<U>(fn: (args: T) => U): Pipeline<U>;
+    transform<U>(fn: (args: T) => OptionalPromise<U>): Pipeline<U>;
     batch: (allowBatching: boolean) => Pipeline<T>;
     close: () => StaticAssertable<WithSideEffects>;
     static<U>(result: U, shape?: U): StaticAssertable<WithSideEffects>;
-    dynamic<U>(fn: (args: T) => StatusProtected<U>, shape?: U): DynamicAssertable<WithSideEffects>;
+    dynamic<U>(fn: (args: T) => OptionalPromise<StatusProtected<U>>, shape?: U): DynamicAssertable<WithSideEffects>;
     status: (code: number, message: string) => StaticAssertable<WithSideEffects>;
 };
 

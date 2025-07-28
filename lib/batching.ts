@@ -2,14 +2,14 @@ import { pipeline } from "./pipeline";
 import { ProcessPipeline, ProcessPipelineBatch } from "./processing";
 import { Request, Response } from "express";
 
-export function HandleBatch(allPipelines: Map<string, pipeline>, req: any, res: any) {
+export async function HandleBatch(allPipelines: Map<string, pipeline>, req: any, res: any) {
     const body = req.body;
     if (!body || !Array.isArray(body) || body.some((x: any) => !Array.isArray(x) || typeof x[0] !== "string")) {
         res.status(400).send("Invalid body");
         return;
     }
     console.log("batch", body);
-    const results = body.map((body: any, index) => {
+    const results = await Promise.all(body.map(async (body: any, index) => {
         const path = body[0];
         if(path === "/batch/" || path === "/batch" || path === "batch/" || path === "batch") {
             let resValue = [400, "Internal error in nested batch"];
@@ -23,7 +23,7 @@ export function HandleBatch(allPipelines: Map<string, pipeline>, req: any, res: 
                     resValue = [200, value];
                 }
             };
-            HandleBatch(allPipelines, body[1], myRes);
+            await HandleBatch(allPipelines, body[1], myRes);
             return resValue;
         }
         const pipelineGroup = allPipelines.get(path) || allPipelines.get("/" + path) || allPipelines.get(path + "/") || allPipelines.get("/" + path + "/") || allPipelines.get(path.replace(/\/$/, ""));
@@ -45,17 +45,17 @@ export function HandleBatch(allPipelines: Map<string, pipeline>, req: any, res: 
         } as Response;
         if(singleBatched) {
             resValue = [400, "Internal error in nested batch"];
-            ProcessPipelineBatch(pipelineGroup, { body: body[1] } as Request, myRes)
+            await ProcessPipelineBatch(pipelineGroup, { body: body[1] } as Request, myRes)
             return resValue;
         }
         resValue = [404, "Not found"];
         for (const p of pipelineGroup) {
-            if(ProcessPipeline(p, { body: body[1] } as Request, myRes)) {
+            if(await ProcessPipeline(p, { body: body[1] } as Request, myRes)) {
                 return resValue;
             }
         }
         return resValue;
-    });
+    }));
     console.log("results", results);
     res.status(200).send(results); // no need for teapot, as we never expect the same status code
 }

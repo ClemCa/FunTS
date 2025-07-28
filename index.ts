@@ -79,15 +79,15 @@ function StartApp(port: number = 3000, ignoreFailedAssertions: boolean = false) 
         if(isolated.length === 1 && isolated[0] === "batch") {
             return;
         }
-        expressApp.post(path, (req, res) => {
+        expressApp.post(path, async (req, res) => {
             if(req.header("batched") && req.header("batched") === "true") {
-                if(ProcessPipelineBatch(pipelineGroup, req, res))
+                if(await ProcessPipelineBatch(pipelineGroup, req, res))
                 {
                     return;
                 }
             } else {
                 for (const p of pipelineGroup) {
-                    if(ProcessPipeline(p, req, res)) {
+                    if(await ProcessPipeline(p, req, res)) {
                         return;
                     }
                 }
@@ -95,8 +95,8 @@ function StartApp(port: number = 3000, ignoreFailedAssertions: boolean = false) 
             res.status(404).send("Not found");
         });
     });
-    expressApp.post("/batch/", (req, res) => {
-        HandleBatch(allPipelines, req, res);
+    expressApp.post("/batch/", async (req, res) => {
+        await HandleBatch(allPipelines, req, res);
     });
     expressApp.listen(port, () => {
         console.log("Server started");

@@ -1,11 +1,12 @@
 {
   "name": "clemfun-ts",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "start": "node dist/index.js",
     "build": "rm -f schema.ts && tsc && tsc-alias",
+    "build-win": "del schema.ts && tsc && tsc-alias",
     "test": "tsc && tsc-alias && node dist/test.js"
   },
   "repository": {
@@ -19,14 +20,14 @@
   },
   "homepage": "https://github.com/ClemCa/FunTS#readme",
   "devDependencies": {
-    "@types/express": "^5.0.0",
-    "concurrently": "^9.1.0",
+    "@types/express": "5.0.3",
+    "concurrently": "9.2.0",
     "tsc-alias": "^1.8.10",
-    "tsc-watch": "^6.2.1",
+    "tsc-watch": "7.1.1",
     "typescript": "^5.6.3"
   },
   "dependencies": {
-    "express": "^4.21.1",
+    "express": "5.1.0",
     "prompt-sync": "^4.2.0"
   },
   "files": [
